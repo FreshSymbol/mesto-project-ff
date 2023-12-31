@@ -1,8 +1,8 @@
 // @todo: Темплейт карточки
 const templateCard = document.querySelector("#card-template").content;
+const cardItem = templateCard.querySelector(".places__item");
 
 // @todo: DOM узлы
-const cardItem = templateCard.cloneNode(true);
 const placeList = document.querySelector(".places__list");
 const addButton = document.querySelector(".profile__add-button");
 const modalNewCard = document.querySelector(".popup_type_new-card");
@@ -25,7 +25,12 @@ modalNewCardCloseButton.onclick = () =>
 
 formNewCard.addEventListener("submit", (event) => {
   event.preventDefault();
-  placeList.append(createCard(inputCardTitle.value, inputCardImageUrl.value));
+  placeList.append(
+    createCard(
+      { name: inputCardTitle.value, link: inputCardImageUrl.value },
+      deleteCard
+    )
+  );
   modalNewCard.classList.remove("popup_is-opened");
   inputCardTitle.value = "";
   inputCardImageUrl.value = "";
@@ -40,7 +45,7 @@ function showModalImage(src, text) {
 }
 
 // @todo: Функция создания карточки
-function createCard(name, link) {
+function createCard(card, deleteCard) {
   const cardCopy = cardItem.cloneNode(true);
   const cardImage = cardCopy.querySelector(".card__image");
   const cardTitle = cardCopy.querySelector(".card__title");
@@ -49,15 +54,16 @@ function createCard(name, link) {
     showModalImage(cardImage.src, cardTitle.textContent)
   );
   deleteButton.addEventListener("click", deleteCard);
-  cardImage.src = link;
-  cardTitle.textContent = name;
+  cardImage.src = card.link;
+  cardTitle.textContent = card.name;
+  cardImage.alt = card.name;
   return cardCopy;
 }
 
 // @todo: Функция удаления карточки
 function deleteCard(event) {
-  event.target.parentNode.remove();
+  event.target.closest(".card").remove();
 }
 
 // @todo: Вывести карточки на страницу
-initialCards.forEach((el) => placeList.append(createCard(el.name, el.link)));
+initialCards.forEach((el) => placeList.append(createCard(el, deleteCard)));
