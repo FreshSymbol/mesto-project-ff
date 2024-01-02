@@ -17,6 +17,7 @@ const modalImageImg = modalImage.querySelector(".popup__image");
 const modalImageText = modalImage.querySelector(".popup__caption");
 const modalImageCloseButton = modalImage.querySelector(".popup__close");
 
+//Попап формы
 addButton.addEventListener("click", () =>
   modalNewCard.classList.add("popup_is-opened")
 );
@@ -36,6 +37,7 @@ formNewCard.addEventListener("submit", (event) => {
   inputCardImageUrl.value = "";
 });
 
+//Попап изображений
 function showModalImage(src, text) {
   modalImage.classList.add("popup_is-opened");
   modalImageImg.src = src;
@@ -53,7 +55,7 @@ function createCard(card, deleteCard) {
   cardImage.addEventListener("click", () =>
     showModalImage(cardImage.src, cardTitle.textContent)
   );
-  deleteButton.addEventListener("click", deleteCard);
+  deleteButton.addEventListener("click", () => deleteCard(cardCopy));
   cardImage.src = card.link;
   cardTitle.textContent = card.name;
   cardImage.alt = card.name;
@@ -61,8 +63,8 @@ function createCard(card, deleteCard) {
 }
 
 // @todo: Функция удаления карточки
-function deleteCard(event) {
-  event.target.closest(".card").remove();
+function deleteCard(card) {
+  card.remove();
 }
 
 // @todo: Вывести карточки на страницу
