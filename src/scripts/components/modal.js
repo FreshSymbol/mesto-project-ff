@@ -1,28 +1,29 @@
-const modalImage = document.querySelector(".popup__image");
-const modalCaption = document.querySelector(".popup__caption");
+const modals = document.querySelectorAll(".popup");
+modals.forEach((modal) => modal.classList.add("popup_is-animated"));
 
 function openModal(element) {
-  element.classList.add("popup_is-opened", "popup_is-animated");
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeModal(element);
-  });
-
-  element.addEventListener("click", (event) => {
-    if (
-      event.target.classList.contains("popup__close") ||
-      event.target.classList.contains("popup")
-    )
-      closeModal(element);
-  });
+  element.classList.add("popup_is-opened");
+  element.querySelector(".popup__close").focus();
+  element.addEventListener("keydown", keydown);
+  element.addEventListener("click", click);
 }
 
 function closeModal(element) {
   element.classList.remove("popup_is-opened");
+  element.removeEventListener("keydown", keydown);
+  element.removeEventListener("click", click);
 }
 
-function showImageModal(event) {
-  modalImage.src = event.src;
-  modalCaption.textContent = event.caption;
+function keydown(event) {
+  if (event.key === "Escape") closeModal(this);
 }
 
-export { openModal, closeModal, showImageModal };
+function click(event) {
+  if (
+    event.target.classList.contains("popup__close") ||
+    event.target.classList.contains("popup")
+  )
+    closeModal(this);
+}
+
+export { openModal, closeModal };
