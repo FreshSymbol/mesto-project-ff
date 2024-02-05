@@ -4,21 +4,21 @@ modals.forEach((modal) => modal.classList.add("popup_is-animated"));
 function openModal(element) {
   element.classList.add("popup_is-opened");
   element.querySelector(".popup__close").focus();
-  element.addEventListener("keydown", keydown);
-  element.addEventListener("click", click);
+  element.addEventListener("keydown", modalCloseKeykHandler);
+  element.addEventListener("click", modalCloseClickHandler);
 }
 
 function closeModal(element) {
   element.classList.remove("popup_is-opened");
-  element.removeEventListener("keydown", keydown);
-  element.removeEventListener("click", click);
+  element.removeEventListener("keydown", modalCloseKeykHandler);
+  element.removeEventListener("click", modalCloseClickHandler);
 }
 
-function keydown(event) {
+function modalCloseKeykHandler(event) {
   if (event.key === "Escape") closeModal(this);
 }
 
-function click(event) {
+function modalCloseClickHandler(event) {
   if (
     event.target.classList.contains("popup__close") ||
     event.target.classList.contains("popup")
