@@ -1,6 +1,6 @@
 const templateCard = document.querySelector("#card-template").content;
 const cardItem = templateCard.querySelector(".places__item");
-
+0;
 function createCard(card, deleteCard, showImageHandler) {
   const cardCopy = cardItem.cloneNode(true);
   const cardImage = cardCopy.querySelector(".card__image");

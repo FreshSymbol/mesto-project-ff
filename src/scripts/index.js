@@ -2,6 +2,7 @@ import "../styles/index.css";
 import initialCards from "./components/cards.js";
 import { createCard, deleteCard } from "./components/card.js";
 import { closeModal, openModal } from "./components/modal.js";
+import { enableValidation } from "./components/validation";
 
 const placeList = document.querySelector(".places__list");
 const buttonAddCard = document.querySelector(".profile__add-button");
@@ -24,6 +25,15 @@ const modalCaption = document.querySelector(".popup__caption");
 
 buttonAddCard.addEventListener("click", () => openModal(modalAddCard));
 buttonEditProfile.addEventListener("click", () => openModal(editProfileModal));
+
+const formData = {
+  formSelector: ".popup__form",
+  inputSelector: ".popup__input",
+  submitButtonSelector: ".popup__button",
+  inactiveButtonClass: "popup__button_disabled",
+  inputErrorClass: "popup__input_type_error",
+  errorClass: "popup__error_visible",
+};
 
 formCard.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -51,6 +61,8 @@ function showImageHandler(event) {
   modalCaption.textContent = event.target.alt;
   openModal(modalImageType);
 }
+
+enableValidation(formData);
 
 initialCards.forEach((card) =>
   placeList.append(createCard(card, deleteCard, showImageHandler))
