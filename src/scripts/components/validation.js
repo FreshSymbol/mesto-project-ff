@@ -1,8 +1,5 @@
-import { from } from "core-js/core/array";
-
 function showError(form, input, message, data) {
   const error = form.querySelector(`.${input.name}-error`);
-  console.log(error);
   input.classList.add(data.inputErrorClass);
   error.textContent = message;
   error.classList.add(data.errorClass);
@@ -17,8 +14,8 @@ function hideError(form, input, data) {
 
 function isValid(form, input, data) {
   if (input.validity.patternMismatch)
-    input.setCustomValidation(input.dataset.errorMessage);
-  else inputElement.setCustomValidity("");
+    input.setCustomValidity(input.dataset.errorMessage);
+  else input.setCustomValidity("");
 
   if (!input.validity.valid)
     showError(form, input, input.validationMessage, data);
@@ -26,21 +23,23 @@ function isValid(form, input, data) {
 }
 
 function hasInvalidForm(form) {
-  return from.some((input) => !input.validity.valid);
+  return Array.from(form).some((input) => {
+    return !input.validity.valid;
+  });
 }
 
 function toggleButtonState(inputList, button, data) {
   if (hasInvalidForm(inputList)) {
-    button.disable = true;
+    button.disabled = true;
     button.classList.add(data.inactiveButtonClass);
   } else {
-    button.disable = false;
+    button.disabled = false;
     button.classList.remove(data.inactiveButtonClass);
   }
 }
 
 function setEventListener(form, data) {
-  const inputList = Array.from(form.querySelector(data.inputSelector));
+  const inputList = Array.from(form.querySelectorAll(data.inputSelector));
   const button = form.querySelector(data.submitButtonSelector);
   toggleButtonState(inputList, button, data);
   inputList.forEach((input) => {
@@ -58,6 +57,13 @@ function enableValidation(data) {
   });
 }
 
-// function clearValidation(form, data) {}
+function clearValidation(form, data) {
+  const inputList = form.querySelectorAll(data.inputErrorClass);
+  const button = form.querySelector(data.submitButtonSelector);
+  inputList.forEach((input) => {
+    hideError(form, input, data);
+  });
+  toggleButtonState(inputList, button, data);
+}
 
-export { enableValidation };
+export { enableValidation, clearValidation };
