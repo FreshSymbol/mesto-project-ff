@@ -63,7 +63,8 @@ function clearValidation(form, data) {
   inputList.forEach((input) => {
     hideError(form, input, data);
   });
-  toggleButtonState(inputList, button, data);
+  button.disabled = true;
+  button.classList.add(data.inactiveButtonClass);
 }
 
 export { enableValidation, clearValidation };

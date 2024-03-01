@@ -1,8 +1,14 @@
 import "../styles/index.css";
-import initialCards from "./components/cards.js";
-import { createCard, deleteCard } from "./components/card.js";
+import { createCard, showLikeHandler } from "./components/card.js";
 import { closeModal, openModal } from "./components/modal.js";
 import { enableValidation, clearValidation } from "./components/validation";
+import {
+  createNewCard,
+  editProfileAvatar,
+  editProfileInfo,
+  getCards,
+  getUserInfo,
+} from "./components/api";
 
 const placeList = document.querySelector(".places__list");
 const buttonAddCard = document.querySelector(".profile__add-button");
@@ -35,22 +41,31 @@ const formData = {
   errorClass: "popup__error_visible",
 };
 
-buttonAddCard.addEventListener("click", () => openModal(modalAddCard));
+buttonAddCard.addEventListener("click", () => {
+  openModal(modalAddCard);
+});
 buttonEditProfile.addEventListener("click", () => {
-  clearValidation(formProfile, formData);
+  clearValidation(formCard, formData);
   openModal(modalEditProfile);
 });
-iconEditAvatar.addEventListener("click", () => openModal(modalEditAvatar));
 
+iconEditAvatar.addEventListener("click", () => openModal(modalEditAvatar));
 formCard.addEventListener("submit", (event) => {
   event.preventDefault();
-  placeList.prepend(
-    createCard(
-      { name: inputNameCard.value, link: inputLinkCard.value },
-      deleteCard,
-      showImageHandler
-    )
-  );
+  loading(true, formCard.querySelector(".popup__button"));
+  createNewCard(inputNameCard.value, inputLinkCard.value)
+    .then((card) => {
+      placeList.prepend(
+        createCard(
+          { name: card.name, link: card.link },
+          card["_id"],
+          showImageHandler
+        )
+      );
+    })
+    .catch((error) => console.log(error))
+    .finally(() => loading(false, formCard.querySelector(".popup__button")));
+
   closeModal(modalAddCard);
   clearValidation(formCard, formData);
   formCard.reset();
@@ -58,16 +73,44 @@ formCard.addEventListener("submit", (event) => {
 
 formProfile.addEventListener("submit", (event) => {
   event.preventDefault();
-  profileTitle.textContent = inputNameProfile.value;
-  profileDescription.textContent = inputDescriptionProfile.value;
+  loading(true, formProfile.querySelector(".popup__button"));
+  editProfileInfo(inputNameProfile.value, inputDescriptionProfile.value)
+    .catch((error) => console.log(error))
+    .finally(() => loading(false, formProfile.querySelector(".popup__button")));
+  updateProfileInfo();
   closeModal(modalEditProfile);
 });
 
 formAvatar.addEventListener("submit", (event) => {
   event.preventDefault();
-  iconEditAvatar.style.backgroundImage = `url(${inputLinkAvatar.value})`;
+  editProfileAvatar(inputLinkAvatar.value)
+    .then((userInfo) => updateProfileAvatar(userInfo.avatar))
+    .catch((error) => console.log(error));
   closeModal(modalEditAvatar);
 });
+
+function updateProfileInfo() {
+  getUserInfo()
+    .then((userInfo) => {
+      profileTitle.textContent = userInfo.name;
+      profileDescription.textContent = userInfo.about;
+      inputNameProfile.value = profileTitle.textContent;
+      inputDescriptionProfile.value = profileDescription.textContent;
+    })
+    .catch((error) => console.log(error));
+}
+
+function updateProfileAvatar(avatar) {
+  iconEditAvatar.style.backgroundImage = `url(${avatar})`;
+}
+
+function loading(isLoading, button) {
+  if (isLoading) {
+    button.textContent = "Cохранение...";
+  } else {
+    button.textContent = "Сохранить";
+  }
+}
 
 function showImageHandler(event) {
   modalImage.src = event.target.src;
@@ -76,8 +119,24 @@ function showImageHandler(event) {
   openModal(modalImageType);
 }
 
-initialCards.forEach((card) =>
-  placeList.append(createCard(card, deleteCard, showImageHandler))
-);
+Promise.all([getUserInfo(), getCards()])
+  .then(([userInfo, cardsInfo]) => {
+    updateProfileAvatar(userInfo.avatar);
+    updateProfileInfo();
+    cardsInfo.forEach((cardInfo) => {
+      const card = createCard(cardInfo, cardInfo["_id"], showImageHandler);
+      showLikeHandler(
+        cardInfo,
+        userInfo["_id"],
+        card.querySelector(".card__like-count"),
+        card.querySelector(".card__like-button")
+      );
+      if (userInfo["_id"] !== cardInfo.owner["_id"]) {
+        card.querySelector(".card__delete-button").remove();
+      }
+      placeList.append(card);
+    });
+  })
+  .catch((error) => console.log(error));
 
 enableValidation(formData);
