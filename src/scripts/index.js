@@ -1,5 +1,5 @@
 import "../styles/index.css";
-import { createCard, showLikeHandler } from "./components/card.js";
+import { createCard } from "./components/card.js";
 import { closeModal, openModal } from "./components/modal.js";
 import { enableValidation, clearValidation } from "./components/validation";
 import {
@@ -10,7 +10,7 @@ import {
   getUserInfo,
 } from "./components/api";
 
-const placeList = document.querySelector(".places__list");
+const cardsContainer = document.querySelector(".places__list");
 const buttonAddCard = document.querySelector(".profile__add-button");
 const buttonEditProfile = document.querySelector(".profile__edit-button");
 const modalAddCard = document.querySelector(".popup_type_new-card");
@@ -32,7 +32,8 @@ const inputLinkAvatar = formAvatar.querySelector(".popup__input_type_url");
 const modalImageType = document.querySelector(".popup_type_image");
 const modalImage = document.querySelector(".popup__image");
 const modalCaption = document.querySelector(".popup__caption");
-const formData = {
+const modals = document.querySelectorAll(".popup");
+const validationConfig = {
   formSelector: ".popup__form",
   inputSelector: ".popup__input",
   submitButtonSelector: ".popup__button",
@@ -41,70 +42,21 @@ const formData = {
   errorClass: "popup__error_visible",
 };
 
-buttonAddCard.addEventListener("click", () => {
-  openModal(modalAddCard);
-});
-buttonEditProfile.addEventListener("click", () => {
-  clearValidation(formCard, formData);
-  openModal(modalEditProfile);
-});
+modals.forEach((modal) => modal.classList.add("popup_is-animated"));
 
-iconEditAvatar.addEventListener("click", () => openModal(modalEditAvatar));
-formCard.addEventListener("submit", (event) => {
-  event.preventDefault();
-  loading(true, formCard.querySelector(".popup__button"));
-  createNewCard(inputNameCard.value, inputLinkCard.value)
-    .then((card) => {
-      placeList.prepend(
-        createCard(
-          { name: card.name, link: card.link },
-          card["_id"],
-          showImageHandler
-        )
-      );
-    })
-    .catch((error) => console.log(error))
-    .finally(() => loading(false, formCard.querySelector(".popup__button")));
-
-  closeModal(modalAddCard);
-  clearValidation(formCard, formData);
-  formCard.reset();
-});
-
-formProfile.addEventListener("submit", (event) => {
-  event.preventDefault();
-  loading(true, formProfile.querySelector(".popup__button"));
-  editProfileInfo(inputNameProfile.value, inputDescriptionProfile.value)
-    .catch((error) => console.log(error))
-    .finally(() => loading(false, formProfile.querySelector(".popup__button")));
-  updateProfileInfo();
-  closeModal(modalEditProfile);
-});
-
-formAvatar.addEventListener("submit", (event) => {
-  event.preventDefault();
-  editProfileAvatar(inputLinkAvatar.value)
-    .then((userInfo) => updateProfileAvatar(userInfo.avatar))
-    .catch((error) => console.log(error));
-  closeModal(modalEditAvatar);
-});
-
-function updateProfileInfo() {
-  getUserInfo()
-    .then((userInfo) => {
-      profileTitle.textContent = userInfo.name;
-      profileDescription.textContent = userInfo.about;
-      inputNameProfile.value = profileTitle.textContent;
-      inputDescriptionProfile.value = profileDescription.textContent;
-    })
-    .catch((error) => console.log(error));
+function updateProfileInfo(userInfo) {
+  profileTitle.textContent = userInfo.name;
+  profileDescription.textContent = userInfo.about;
+  inputNameProfile.value = profileTitle.textContent;
+  inputDescriptionProfile.value = profileDescription.textContent;
 }
 
-function updateProfileAvatar(avatar) {
-  iconEditAvatar.style.backgroundImage = `url(${avatar})`;
+function updateProfileAvatar(userInfo) {
+  iconEditAvatar.style.backgroundImage = `url(${userInfo.avatar})`;
 }
 
-function loading(isLoading, button) {
+function setIsLoading(isLoading, form) {
+  const button = form.querySelector(".popup__button");
   if (isLoading) {
     button.textContent = "Cохранение...";
   } else {
@@ -121,22 +73,65 @@ function showImageHandler(event) {
 
 Promise.all([getUserInfo(), getCards()])
   .then(([userInfo, cardsInfo]) => {
-    updateProfileAvatar(userInfo.avatar);
-    updateProfileInfo();
+    updateProfileAvatar(userInfo);
+    updateProfileInfo(userInfo);
     cardsInfo.forEach((cardInfo) => {
-      const card = createCard(cardInfo, cardInfo["_id"], showImageHandler);
-      showLikeHandler(
-        cardInfo,
-        userInfo["_id"],
-        card.querySelector(".card__like-count"),
-        card.querySelector(".card__like-button")
-      );
-      if (userInfo["_id"] !== cardInfo.owner["_id"]) {
-        card.querySelector(".card__delete-button").remove();
-      }
-      placeList.append(card);
+      cardsContainer.append(createCard(userInfo, cardInfo, showImageHandler));
     });
   })
   .catch((error) => console.log(error));
 
-enableValidation(formData);
+buttonAddCard.addEventListener("click", () => {
+  openModal(modalAddCard);
+});
+
+buttonEditProfile.addEventListener("click", () => {
+  openModal(modalEditProfile);
+});
+
+iconEditAvatar.addEventListener("click", () => openModal(modalEditAvatar));
+
+formCard.addEventListener("submit", (event) => {
+  event.preventDefault();
+  setIsLoading(true, formCard);
+  Promise.all([
+    getUserInfo(),
+    createNewCard(inputNameCard.value, inputLinkCard.value),
+  ])
+    .then(([userInfo, cardInfo]) => {
+      cardsContainer.prepend(createCard(userInfo, cardInfo, showImageHandler));
+      closeModal(modalAddCard);
+      clearValidation(formCard, validationConfig);
+      formCard.reset();
+    })
+    .catch((error) => console.log(error))
+    .finally(() => setIsLoading(false, formCard));
+});
+
+formProfile.addEventListener("submit", (event) => {
+  event.preventDefault();
+  setIsLoading(true, formProfile);
+  editProfileInfo(inputNameProfile.value, inputDescriptionProfile.value)
+    .then((userInfo) => {
+      updateProfileInfo(userInfo);
+      clearValidation(formProfile, validationConfig);
+      closeModal(modalEditProfile);
+      formProfile.reset();
+    })
+    .catch((error) => console.log(error))
+    .finally(() => setIsLoading(false, formProfile));
+});
+
+formAvatar.addEventListener("submit", (event) => {
+  event.preventDefault();
+  setIsLoading(true, formAvatar);
+  editProfileAvatar(inputLinkAvatar.value)
+    .then((userInfo) => {
+      updateProfileAvatar(userInfo);
+    })
+    .catch((error) => console.log(error))
+    .finally(() => setIsLoading(false, formAvatar));
+  closeModal(modalEditAvatar);
+});
+
+enableValidation(validationConfig);

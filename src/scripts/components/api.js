@@ -6,7 +6,7 @@ const config = {
   },
 };
 
-const handlerResponse = (response) => {
+const checkResponse = (response) => {
   if (response.ok) {
     return response.json();
   }
@@ -16,13 +16,13 @@ const handlerResponse = (response) => {
 const getUserInfo = () => {
   return fetch(`${config.baseUrl}/users/me`, {
     headers: config.headers,
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 const getCards = () => {
   return fetch(`${config.baseUrl}/cards`, {
     headers: config.headers,
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 const editProfileInfo = (name, about) => {
@@ -33,7 +33,7 @@ const editProfileInfo = (name, about) => {
       name,
       about,
     }),
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 const editProfileAvatar = (avatar) => {
@@ -43,7 +43,7 @@ const editProfileAvatar = (avatar) => {
     body: JSON.stringify({
       avatar,
     }),
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 const createNewCard = (name, link) => {
@@ -54,28 +54,28 @@ const createNewCard = (name, link) => {
       name,
       link,
     }),
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 const deleteCard = (cardId) => {
   return fetch(`${config.baseUrl}/cards/${cardId}`, {
     method: "DELETE",
     headers: config.headers,
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 const addLike = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "PUT",
     headers: config.headers,
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 const deleteLike = (cardId) => {
   return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
     method: "DELETE",
     headers: config.headers,
-  }).then(handlerResponse);
+  }).then(checkResponse);
 };
 
 export {
