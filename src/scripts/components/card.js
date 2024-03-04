@@ -1,9 +1,7 @@
-import { addLike, deleteCard, deleteLike } from "./api";
-
 const templateCard = document.querySelector("#card-template").content;
 const cardItem = templateCard.querySelector(".places__item");
 
-function createCard(userInfo, card, showImageHandler) {
+function createCard(userId, card, onDelete, onLike, onImageClick) {
   const cardCopy = cardItem.cloneNode(true);
   const cardImage = cardCopy.querySelector(".card__image");
   const cardTitle = cardCopy.querySelector(".card__title");
@@ -11,27 +9,27 @@ function createCard(userInfo, card, showImageHandler) {
   const likeCountElement = cardCopy.querySelector(".card__like-count");
   const buttonLike = cardCopy.querySelector(".card__like-button");
   const cardId = card._id;
-  const userId = userInfo._id;
 
   cardImage.src = card.link;
   cardTitle.textContent = card.name;
   cardImage.alt = card.name;
 
-  checkUserIsCreateCard(userId, card, buttonDelete);
+  checkIsOwner(userId, card, buttonDelete);
   setInitialLikeState(card, userId, likeCountElement, buttonLike);
 
-  buttonDelete.addEventListener("click", (event) => {
-    const card = event.target.closest(".card");
-    deleteCard(cardId)
-      .then(() => card.remove())
-      .catch((error) => console.log(error));
-  });
+  buttonDelete.addEventListener("click", (event) => onDelete(event, cardId));
 
-  buttonLike.addEventListener("click", (event) => {
-    updateLikeCount(buttonLike, cardId, likeCountElement);
-  });
+  buttonLike.addEventListener("click", () =>
+    onLike(
+      buttonLike,
+      cardId,
+      likeCountElement,
+      toggleLikeButton,
+      setLikesCount
+    )
+  );
 
-  cardImage.addEventListener("click", showImageHandler);
+  cardImage.addEventListener("click", onImageClick);
   return cardCopy;
 }
 
@@ -39,34 +37,14 @@ function toggleLikeButton(button) {
   button.classList.toggle("card__like-button_is-active");
 }
 
-function setInitialLikeState(cardInfo, userId, element, button) {
-  setLikesCount(cardInfo.likes.length, element);
-  cardInfo.likes.some((user) => {
-    if (user._id === userId)
-      button.classList.add("card__like-button_is-active");
-  });
+function setInitialLikeState(cardInfo, userId, likeCountElement, button) {
+  const isLiked = cardInfo.likes.some((user) => user._id === userId);
+  setLikesCount(cardInfo.likes.length, likeCountElement);
+  if (isLiked) button.classList.add("card__like-button_is-active");
 }
 
-function checkUserIsCreateCard(userId, cardInfo, buttonDelete) {
+function checkIsOwner(userId, cardInfo, buttonDelete) {
   if (userId !== cardInfo.owner._id) buttonDelete.remove();
-}
-
-function updateLikeCount(button, cardId, likeCountElement) {
-  if (!button.classList.contains("card__like-button_is-active")) {
-    addLike(cardId)
-      .then((card) => {
-        toggleLikeButton(button);
-        setLikesCount(card.likes.length, likeCountElement);
-      })
-      .catch((error) => console.log(error));
-  } else {
-    deleteLike(cardId)
-      .then((card) => {
-        toggleLikeButton(button);
-        setLikesCount(card.likes.length, likeCountElement);
-      })
-      .catch((error) => console.log(error));
-  }
 }
 
 function setLikesCount(count, element) {

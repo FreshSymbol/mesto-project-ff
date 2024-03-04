@@ -8,6 +8,9 @@ import {
   editProfileInfo,
   getCards,
   getUserInfo,
+  deleteCard,
+  deleteLike,
+  addLike,
 } from "./components/api";
 
 const cardsContainer = document.querySelector(".places__list");
@@ -33,6 +36,7 @@ const modalImageType = document.querySelector(".popup_type_image");
 const modalImage = document.querySelector(".popup__image");
 const modalCaption = document.querySelector(".popup__caption");
 const modals = document.querySelectorAll(".popup");
+let userId;
 const validationConfig = {
   formSelector: ".popup__form",
   inputSelector: ".popup__input",
@@ -47,8 +51,6 @@ modals.forEach((modal) => modal.classList.add("popup_is-animated"));
 function updateProfileInfo(userInfo) {
   profileTitle.textContent = userInfo.name;
   profileDescription.textContent = userInfo.about;
-  inputNameProfile.value = profileTitle.textContent;
-  inputDescriptionProfile.value = profileDescription.textContent;
 }
 
 function updateProfileAvatar(userInfo) {
@@ -64,19 +66,53 @@ function setIsLoading(isLoading, form) {
   }
 }
 
-function showImageHandler(event) {
+function onImageClick(event) {
   modalImage.src = event.target.src;
   modalCaption.alt = event.target.alt;
   modalCaption.textContent = event.target.alt;
   openModal(modalImageType);
 }
 
+function onDelete(event, cardId) {
+  const card = event.target.closest(".card");
+  deleteCard(cardId)
+    .then(() => card.remove())
+    .catch((error) => console.log(error));
+}
+
+function onLike(
+  button,
+  cardId,
+  likeCountElement,
+  toggleLikeButton,
+  setLikesCount
+) {
+  if (!button.classList.contains("card__like-button_is-active")) {
+    addLike(cardId)
+      .then((card) => {
+        toggleLikeButton(button);
+        setLikesCount(card.likes.length, likeCountElement);
+      })
+      .catch((error) => console.log(error));
+  } else {
+    deleteLike(cardId)
+      .then((card) => {
+        toggleLikeButton(button);
+        setLikesCount(card.likes.length, likeCountElement);
+      })
+      .catch((error) => console.log(error));
+  }
+}
+
 Promise.all([getUserInfo(), getCards()])
   .then(([userInfo, cardsInfo]) => {
+    userId = userInfo._id;
     updateProfileAvatar(userInfo);
     updateProfileInfo(userInfo);
     cardsInfo.forEach((cardInfo) => {
-      cardsContainer.append(createCard(userInfo, cardInfo, showImageHandler));
+      cardsContainer.append(
+        createCard(userId, cardInfo, onDelete, onLike, onImageClick)
+      );
     });
   })
   .catch((error) => console.log(error));
@@ -86,6 +122,9 @@ buttonAddCard.addEventListener("click", () => {
 });
 
 buttonEditProfile.addEventListener("click", () => {
+  inputNameProfile.value = profileTitle.textContent;
+  inputDescriptionProfile.value = profileDescription.textContent;
+  clearValidation(formProfile, validationConfig);
   openModal(modalEditProfile);
 });
 
@@ -94,12 +133,12 @@ iconEditAvatar.addEventListener("click", () => openModal(modalEditAvatar));
 formCard.addEventListener("submit", (event) => {
   event.preventDefault();
   setIsLoading(true, formCard);
-  Promise.all([
-    getUserInfo(),
-    createNewCard(inputNameCard.value, inputLinkCard.value),
-  ])
-    .then(([userInfo, cardInfo]) => {
-      cardsContainer.prepend(createCard(userInfo, cardInfo, showImageHandler));
+
+  createNewCard(inputNameCard.value, inputLinkCard.value)
+    .then((cardInfo) => {
+      cardsContainer.prepend(
+        createCard(userId, cardInfo, onDelete, onLike, onImageClick)
+      );
       closeModal(modalAddCard);
       clearValidation(formCard, validationConfig);
       formCard.reset();
@@ -114,9 +153,8 @@ formProfile.addEventListener("submit", (event) => {
   editProfileInfo(inputNameProfile.value, inputDescriptionProfile.value)
     .then((userInfo) => {
       updateProfileInfo(userInfo);
-      clearValidation(formProfile, validationConfig);
       closeModal(modalEditProfile);
-      formProfile.reset();
+      clearValidation(formProfile, validationConfig);
     })
     .catch((error) => console.log(error))
     .finally(() => setIsLoading(false, formProfile));
@@ -128,10 +166,10 @@ formAvatar.addEventListener("submit", (event) => {
   editProfileAvatar(inputLinkAvatar.value)
     .then((userInfo) => {
       updateProfileAvatar(userInfo);
+      closeModal(modalEditAvatar);
     })
     .catch((error) => console.log(error))
     .finally(() => setIsLoading(false, formAvatar));
-  closeModal(modalEditAvatar);
 });
 
 enableValidation(validationConfig);

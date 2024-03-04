@@ -12,8 +12,10 @@ function closeModal(element) {
 }
 
 function closeModalKeyEsckHandler(event) {
-  const modalActive = event.target.closest(".popup_is-opened");
-  if (event.key === "Escape") closeModal(modalActive);
+  if (event.key === "Escape") {
+    const modalActive = document.querySelector(".popup_is-opened");
+    closeModal(modalActive);
+  }
 }
 
 function closeModalClickHandler(event) {
